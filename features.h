@@ -45,4 +45,13 @@ public:
     bool load(const std::string& filepath);
 };
 
+struct SiftData {
+    int width = 0;
+    int height = 0;
+    std::vector<cv::Point2f> pts; // 2D συντεταγμένες (x, y)
+    cv::Mat descriptors;          // N x 128 (CV_32F)
+};
+
+SiftData extract_sift_full(const std::string& image_path);
+
 #endif // FEATURES_H

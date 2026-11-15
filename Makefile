@@ -1,56 +1,50 @@
 # ==============================================================================
-# Makefile για το Σύστημα Ανάκτησης Εικόνων (Image Retrieval System)
-# 
-# Υποστηριζόμενοι αλγόριθμοι:
-# - Exact Nearest Neighbor Search (Ground Truth)
-# - Locality Sensitive Hashing (LSH)
-# - Random Hypercube Projection
-# - Inverted File with Flat Vectors (IVFFlat)
-# - Inverted File with Product Quantization (IVFPQ)
+# Makefile για το Σύστημα Γεωμετρικής Επαλήθευσης & Επανακατάταξης Εικόνων
+# (SIFT + BoVW + Normalized DLT/SVD + RANSAC)
 # ==============================================================================
 
 # Ορισμός του C++ μεταγλωττιστή
 CXX = g++
 
-# Σημαίες μεταγλώττισης (Compilation Flags):
-# - -O3: Μέγιστη επιθετική βελτιστοποίηση κώδικα για υψηλή ταχύτητα εκτέλεσης.
-# - -Wall: Ενεργοποίηση όλων των προειδοποιήσεων (warnings) του compiler.
-# - -std=c++17: Χρήση του προτύπου C++17 (απαιτείται για σύγχρονες δομές και lambdas).
-# - pkg-config --cflags: Αυτόματη ανάκτηση των include directories της OpenCV 4.
-CXXFLAGS = -O3 -Wall -std=c++17 $(shell pkg-config --cflags opencv4)
+# Εντοπισμός include paths για Eigen3 και OpenCV 4
+EIGEN_CFLAGS = $(shell pkg-config --cflags eigen3 2>/dev/null || echo "-I/usr/include/eigen3")
+OPENCV_CFLAGS = $(shell pkg-config --cflags opencv4)
 
-# Σημαίες σύνδεσης (Linker Flags):
-# - pkg-config --libs: Σύνδεση με τις απαραίτητες βιβλιοθήκες της OpenCV (core, imgcodecs, features2d).
+# Σημαίες μεταγλώττισης (Compilation Flags):
+# - -O3: Μέγιστη βελτιστοποίηση ταχύτητας για RANSAC και SIFT matching.
+# - -Wall: Ενεργοποίηση προειδοποιήσεων του compiler.
+# - -std=c++17: Πρότυπο C++17 (std::filesystem, structured bindings κ.λπ.).
+CXXFLAGS = -O3 -Wall -std=c++17 $(EIGEN_CFLAGS) $(OPENCV_CFLAGS)
+
+# Σημαίες σύνδεσης (Linker Flags)
 LDFLAGS = $(shell pkg-config --libs opencv4)
 
-# Το όνομα του παραγόμενου εκτελέσιμου αρχείου
-TARGET = search
+# Το όνομα του παραγόμενου εκτελέσιμου αρχείου όπως ορίζεται στην εκφώνηση
+TARGET = verify
 
 # Λίστα όλων των πηγαίων αρχείων C++ (.cpp)
-# Σημείωση: Τα ExactSearch.h και metrics.h είναι header-only και δεν χρειάζονται ξεχωριστό .cpp
-SRCS = main.cpp features.cpp lsh.cpp hypercube.cpp ivfflat.cpp ivfpq.cpp
+# Σημείωση: Τα ExactSearch.h και metrics.h είναι header-only
+SRCS = main.cpp features.cpp geometry.cpp lsh.cpp hypercube.cpp ivfflat.cpp ivfpq.cpp
 
-# Αυτόματη παραγωγή των ονομάτων των αντικειμενικών αρχείων (.o) από τα αντίστοιχα .cpp
+# Αυτόματη παραγωγή των αντικειμενικών αρχείων (.o)
 OBJS = $(SRCS:.cpp=.o)
 
-# Δήλωση ψευδο-στόχων (Phony Targets) για αποφυγή συγκρούσεων με τυχόν ομώνυμα αρχεία στο δίσκο
 .PHONY: all clean clean_all
 
-# Προεπιλεγμένος στόχος: μεταγλώττιση και σύνδεση του εκτελέσιμου
+# Προεπιλεγμένος στόχος: μεταγλώττιση και σύνδεση του εκτελέσιμου verify
 all: $(TARGET)
 
-# Κανόνας σύνδεσης (Linking) των αντικειμενικών αρχείων (.o) για τη δημιουργία του εκτελέσιμου
 $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS) $(LDFLAGS)
 
-# Κανόνας μοτίβου (Pattern Rule) για τη μεταγλώττιση κάθε .cpp σε αντίστοιχο .o
+# Κανόνας μεταγλώττισης κάθε .cpp σε αντίστοιχο .o
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Κανόνας καθαρισμού των παραγόμενων αρχείων (.o, εκτελέσιμο, output.txt)
+# Καθαρισμός των παραγόμενων αρχείων (.o, εκτελέσιμο verify, προεπιλεγμένη έξοδος)
 clean:
-	rm -f $(OBJS) $(TARGET) output.txt
+	rm -f $(OBJS) $(TARGET) output.txt results.txt
 
-# Κανόνας πλήρους καθαρισμού (περιλαμβάνει και τα προσωρινά αρχεία αποτελεσμάτων πειραμάτων)
+# Πλήρης καθαρισμός (συμπεριλαμβανομένων προσωρινών αρχείων πειραμάτων & διαγραμμάτων)
 clean_all: clean
 	rm -f res_*.txt results_summary.csv *.png
