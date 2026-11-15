@@ -57,7 +57,7 @@ void VisualVocabulary::train(const std::vector<cv::Mat>& descriptors_list, int m
             valid_descriptors.push_back(float_mat);
             total_descriptors += float_mat.rows;// Άθροιση του συνολικού πλήθους descriptors
         }
-        }
+        
     }
 
     // Έλεγχος ύπαρξης επαρκών δεδομένων για εκπαίδευση
@@ -128,7 +128,8 @@ std::vector<float> VisualVocabulary::compute_bow_vector(const cv::Mat& descripto
 
     // L2 Κανονικοποίηση (Unit Norm: ||bow||_2 = 1.0)
     // Εξασφαλίζει ότι το μέτρο του διανύσματος είναι ανεξάρτητο από το πλήθος των εντοπισμένων
-    // keypoints της εικόνας, διασφαλίζοντας ισότιμη σύγκριση στην Ευκλείδεια αναζήτηση    float sum_sq = 0.0f;
+    // keypoints της εικόνας, διασφαλίζοντας ισότιμη σύγκριση στην Ευκλείδεια αναζήτηση    
+    float sum_sq = 0.0f;
     for (float val : bow) {
         sum_sq += val * val;
     }
